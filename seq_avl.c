@@ -18,13 +18,17 @@ struct avl_tree {
 
 // Function declarations
 
-int height(node*);
-node* insert_h(avl_tree*, node*, void*);
-int max(int, int);
-void free_nodes(node*);
-node* remove_h(avl_tree*, node*, void*);
-int balance_factor(node*);
-node* find_h(avl_tree*, node*, void*);
+static int height(node*);
+static node* insert_h(avl_tree*, node*, void*);
+static int max(int, int);
+static void free_nodes(node*);
+static node* remove_h(avl_tree*, node*, void*);
+static int balance_factor(node*);
+static node* find_h(avl_tree*, node*, void*);
+static node* single_rotate_with_left(node*);
+static node* single_rotate_with_right(node*);
+static node* double_rotate_with_left(node*);
+static node* double_rotate_with_right(node*);
 
 
 // Library functions
@@ -54,7 +58,7 @@ void avl_remove(avl_tree* tree, void* val) {
 
 // Library helper functions
 
-void free_nodes(node* tree) {
+static void free_nodes(node* tree) {
     if (!tree)
         return;
     if (tree->left)
@@ -64,7 +68,7 @@ void free_nodes(node* tree) {
     free(tree);
 }
 
-node* find_h(avl_tree* tree, node* n, void* val) {
+static node* find_h(avl_tree* tree, node* n, void* val) {
     if (n == NULL)
         return NULL;
     int cmp_val = tree->cmp(tree->head->data, val);
@@ -75,27 +79,41 @@ node* find_h(avl_tree* tree, node* n, void* val) {
     return n;
 }
 
-node* insert_h(avl_tree* tree, node* n, void* val) {
+static node* insert_h(avl_tree* tree, node* n, void* val) {
     if (val)
         printf("insert %d\n", *(int*) val);
     if (n == NULL) {
         n = (node*)calloc(1,sizeof(node));
         n->data = val;
     } else {
-        int cmp_val = tree->cmp(tree->head->data, val);
+        int cmp_val = tree->cmp(tree->head->data, val); // + == val > tree->head->data
         if (cmp_val > 0) {
             n->right = insert_h(tree, n->right, val);
-            // Insert rotation stuff here
+            if (balance_factor(n) == -2) {
+                if (tree->cmp(n->right->data, val) > 0) { 
+                    // val > n->right->data
+                    n = single_rotate_with_right(n);
+                } else {
+                    n = double_rotate_with_right(n);
+                }
+            }
         } else if (cmp_val < 0) {
             n->left = insert_h(tree, n->left, val);
-            //Insert rot
+            if (balance_factor(n) == 2) {
+                if (tree->cmp(n->left->data, val) < 0) { 
+                    // val < n->left->data
+                    n = single_rotate_with_left(n);
+                } else {
+                    n = double_rotate_with_left(n);
+                }
+            }
         }
     }
     n->height = height(n);
     return n;
 }
 
-node* remove_h(avl_tree* tree, node* n, void* val) {
+static node* remove_h(avl_tree* tree, node* n, void* val) {
     if (n == NULL)
         return NULL;
     node* p;
@@ -120,7 +138,7 @@ node* remove_h(avl_tree* tree, node* n, void* val) {
 }
 // Helper functions
 
-int height(node* n) {
+static int height(node* n) {
     int rh, lh;
     if (n == NULL)
         return 0;
@@ -129,7 +147,7 @@ int height(node* n) {
     return max(lh, rh);
 }
 
-int balance_factor(node* n) {
+static int balance_factor(node* n) {
     int rh, lh;
     if (n == NULL)
         return 0;
@@ -138,11 +156,50 @@ int balance_factor(node* n) {
     return lh-rh;
 }
 
-int max(int a, int b) {
+static node* single_rotate_with_left( node* k2 )
+{
+    node* k1 = NULL;
+ 
+    k1 = k2->left;
+    k2->left = k1->right;
+    k1->right = k2;
+ 
+    k2->height = max( height( k2->left ), height( k2->right ) ) + 1;
+    k1->height = max( height( k1->left ), k2->height ) + 1;
+    return k1; /* new root */
+}
+
+static node* single_rotate_with_right( node* k1 )
+{
+    node* k2;
+ 
+    k2 = k1->right;
+    k1->right = k2->left;
+    k2->left = k1;
+ 
+    k1->height = max( height( k1->left ), height( k1->right ) ) + 1;
+    k2->height = max( height( k2->right ), k1->height ) + 1;
+ 
+    return k2;  /* New root */
+}
+
+static node* double_rotate_with_left( node* k3 )
+{
+    k3->left = single_rotate_with_right( k3->left );
+    return single_rotate_with_left( k3 );
+}
+
+static node* double_rotate_with_right( node* k1 )
+{
+    k1->right = single_rotate_with_left( k1->right );
+    return single_rotate_with_right( k1 );
+}
+
+static int max(int a, int b) {
     return a > b ? a : b;
 }
 
-void* xalloc(size_t size) {
+static void* xalloc(size_t size) {
     void* mem = calloc(1,size);
     if (mem)
         return mem;
@@ -150,7 +207,7 @@ void* xalloc(size_t size) {
 }
 
 // Example comparator function
-int int_cmp(int* o1, int* o2) {
+static int int_cmp(int* o1, int* o2) {
     return *o2 - *o1;
 }
 
