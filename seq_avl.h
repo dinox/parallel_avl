@@ -6,4 +6,4 @@ void avl_free_tree(avl_tree*);
 void* avl_find(avl_tree*, void*);
 void avl_insert(avl_tree*, void*);
 void avl_remove(avl_tree*, void*);
-//void avl_preorder(avl_tree*, void (*)(const void*));
+void avl_preorder(avl_tree*, void (*)(const void*));

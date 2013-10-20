@@ -59,7 +59,7 @@ void avl_insert(avl_tree* tree, void* val) {
 }
 
 void avl_remove(avl_tree* tree, void* val) {
-    remove_h(tree, tree->head, val);
+    tree->head = remove_h(tree, tree->head, val);
 }
 
 void avl_preorder(avl_tree* tree, void (*print_func)(const void* val)) {
@@ -137,8 +137,22 @@ static node* remove_h(avl_tree* tree, node* n, void* val) {
     int cmp_val = tree->cmp(n->data, val);
     if (cmp_val > 0) {
         n->right = remove_h(tree, n->right, val);
+        if (balance_factor(n) == 2) {
+            if (balance_factor(n->left) >= 0) { 
+                n = single_rotate_with_left(n);
+            } else {
+                n = double_rotate_with_left(n);
+            }
+        }
     } else if (cmp_val < 0) {
         n->left = remove_h(tree, n->left, val);
+        if (balance_factor(n) == -2) {
+            if (balance_factor(n->right) <= 0) { 
+                n = single_rotate_with_right(n);
+            } else {
+                n = double_rotate_with_right(n);
+            }
+        }
     } else {
         // Data to be deleted is found
         if (n->right != NULL) {
@@ -146,6 +160,13 @@ static node* remove_h(avl_tree* tree, node* n, void* val) {
             while(p->left != NULL) p=p->left;
             n->data = p->data;
             n->right = remove_h(tree, n->right, p->data);
+            if (balance_factor(n) == 2) {
+                if (balance_factor(n->left) >= 0) { 
+                    n = single_rotate_with_left(n);
+                } else {
+                    n = double_rotate_with_left(n);
+                }
+            }
         } else {
             return n->left;
         }
