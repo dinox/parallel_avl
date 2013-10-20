@@ -1,22 +1,31 @@
 #include "seq_avl.h"
 #include<stdio.h>
+#include<stdlib.h>
+
+#define N (10)
 
 int cmp(const void* a, const void* b) {
     return *(int*)b - *(int*)a;
 }
 
+void print_int(const void* i) {
+    printf("%d ", *(int*)i);
+}
+
 int main() {
     avl_tree* t = avl_new_tree(&cmp);
-    int A[5];
+    int* A = malloc(N*sizeof(int));
     int i;
-    for (i = 0; i < 5; i++) {
-        A[i] = i;
+    for (i = 0; i < N; i++) {
+        A[i] = i+1;
         avl_insert(t, A+i);
+        avl_preorder(t, &print_int);
+        printf("\n");
     }
-    int k = 4;
-    int* find = (int*)avl_find(t, &k);
-    if (find != NULL)
-        printf("%d\n", *find);
+    for (i = 0; i < N; i++) {
+        avl_remove(t, A+i);
+    }
     avl_free_tree(t);
+    free(A);
     return 0;
 }

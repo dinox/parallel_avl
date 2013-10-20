@@ -29,6 +29,7 @@ static node* single_rotate_with_left(node*);
 static node* single_rotate_with_right(node*);
 static node* double_rotate_with_left(node*);
 static node* double_rotate_with_right(node*);
+static void preorder(avl_tree* tree, node* n, void (*print_func)(const void* val));
 
 
 // Library functions
@@ -49,14 +50,31 @@ void avl_free_tree(avl_tree* tree) {
 }
 
 void avl_insert(avl_tree* tree, void* val) {
-    insert_h(tree, tree->head, val);
+    if (!tree->head) {
+        tree->head = calloc(1,sizeof(node));
+        tree->head->data = val;
+        return;
+    }
+    tree->head = insert_h(tree, tree->head, val);
 }
 
 void avl_remove(avl_tree* tree, void* val) {
     remove_h(tree, tree->head, val);
 }
 
+void avl_preorder(avl_tree* tree, void (*print_func)(const void* val)) {
+    preorder(tree, tree->head, print_func);
+}
+
 // Library helper functions
+
+static void preorder(avl_tree* tree, node* n, void (*print_func)(const void* val)) {
+    if (n) {
+        print_func(n->data);
+        preorder(tree, n->left, print_func);
+        preorder(tree, n->right, print_func);
+    }
+}
 
 static void free_nodes(node* tree) {
     if (!tree)
@@ -80,13 +98,12 @@ static node* find_h(avl_tree* tree, node* n, void* val) {
 }
 
 static node* insert_h(avl_tree* tree, node* n, void* val) {
-    if (val)
-        printf("insert %d\n", *(int*) val);
     if (n == NULL) {
         n = (node*)calloc(1,sizeof(node));
         n->data = val;
     } else {
-        int cmp_val = tree->cmp(tree->head->data, val); // + == val > tree->head->data
+        int cmp_val = tree->cmp(tree->head->data, val); 
+        // cmp_val > 0 <=> val > tree->head->data
         if (cmp_val > 0) {
             n->right = insert_h(tree, n->right, val);
             if (balance_factor(n) == -2) {
@@ -164,8 +181,8 @@ static node* single_rotate_with_left( node* k2 )
     k2->left = k1->right;
     k1->right = k2;
  
-    k2->height = max( height( k2->left ), height( k2->right ) ) + 1;
-    k1->height = max( height( k1->left ), k2->height ) + 1;
+    k1->height = height(k1);
+    k2->height = height(k2); 
     return k1; /* new root */
 }
 
@@ -177,9 +194,8 @@ static node* single_rotate_with_right( node* k1 )
     k1->right = k2->left;
     k2->left = k1;
  
-    k1->height = max( height( k1->left ), height( k1->right ) ) + 1;
-    k2->height = max( height( k2->right ), k1->height ) + 1;
- 
+    k1->height = height(k1);
+    k2->height = height(k2); 
     return k2;  /* New root */
 }
 
